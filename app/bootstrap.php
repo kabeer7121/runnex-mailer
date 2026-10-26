@@ -12,12 +12,8 @@ error_reporting(E_ALL);
 
 $cfgFile = RX_ROOT . '/config.php';
 if (!is_file($cfgFile)) {
-    if (PHP_SAPI === 'cli') {
-        fwrite(STDERR, "Runnex is not installed. Open install.php in your browser first.\n");
-        exit(1);
-    }
-    header('Location: install.php');
-    exit;
+    http_response_code(500);
+    exit("config.php is missing. See README.md for setup.\n");
 }
 $GLOBALS['RX_CONFIG'] = require $cfgFile;
 if (!empty($GLOBALS['RX_CONFIG']['debug'])) ini_set('display_errors', '1');

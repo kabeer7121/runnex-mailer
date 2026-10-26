@@ -26,7 +26,6 @@ if (is_post()) {
   <div class="auth-brand"><span class="brand-mark"><img src="assets/img/favicon-light-192x192.png" alt=""></span><span class="brand-text"><b>Runnex Logistics</b><small>Email Marketing</small></span></div>
   <h1>Welcome back</h1>
   <p class="muted">Sign in to continue to your workspace</p>
-  <?php if (isset($_GET['installed'])): ?><div class="alert alert-success">Installed! Sign in with your admin account. Delete install.php from the server.</div><?php endif; ?>
   <?php if ($error): ?><div class="alert alert-error"><?= e($error) ?></div><?php endif; ?>
   <form method="post" class="form">
     <?= csrf_field() ?>
