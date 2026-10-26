@@ -1,0 +1,195 @@
+﻿RUNNEX LOGISTICS - EMAIL MARKETING
+Setup & Deployment Guide (Hostinger)
+
+
+Self-hosted cold-email platform for Runnex Logistics dispatch services.
+PHP 8.1+ and MySQL, with no Composer or Node needed. It runs on Hostinger shared hosting.
+
+
+
+1. UPLOAD (ABOUT 5 MINUTES)
+---------------------------
+
+1. Hostinger hPanel → Websites → your domain → File Manager.
+2. Open "public_html" (or a subfolder such as "public_html/mail", or a subdomain folder such as "mail.yourdomain.com").
+3. Upload Runnex-Email-Marketing.zip, right-click it and choose Extract. Then delete the zip.
+   The folder must contain "index.php", "install.php", "cron.php", "t.php", "app/", "assets/" and "storage/".
+4. hPanel → Advanced → PHP Configuration: choose PHP 8.2 or 8.3. Make sure the extensions
+   "pdo_mysql", "openssl", "mbstring", "iconv" and "zip" are enabled (they are on by default).
+5. hPanel → Security → SSL: install the free SSL certificate. Use "https://", because tracking links depend on it.
+
+TIP: use a subdomain such as "mail.runnexlogistics.com". Tracking and unsubscribe links then use your
+     own domain, which helps deliverability.
+
+
+2. DATABASE
+-----------
+
+hPanel → Databases → MySQL Databases → create a database, a user and a password. Write all three down.
+
+
+3. INSTALL
+----------
+
+Open "https://your-domain/install.php" in the browser and fill in:
+- the database name, user and password (host is "localhost")
+- the App URL (detected automatically) and your timezone
+- your company name and the admin login
+
+After installing, delete "install.php" from File Manager.
+
+NOTE: "config.php" holds the encryption key for the saved Gmail app passwords. Back it up and never share it.
+NOTE: If it is lost, every account must be reconnected.
+
+
+4. CRON JOB (REQUIRED)
+----------------------
+
+Every automatic feature runs from "cron.php", once per minute. That includes sending, warmup, reply and bounce detection, health scores and auto-pause.
+
+hPanel → Advanced → Cron Jobs → Create:
+- Type: PHP (or Custom)
+- Command: "/usr/bin/php /home/<your-user>/public_html/cron.php"
+  (the exact path is shown in the app under Settings → Cron job, ready to copy)
+- Schedule: every minute ("    *")
+
+If the red banner "Background worker is not running" disappears from the dashboard, the cron job is working.
+
+
+5. CONNECT GMAIL ACCOUNTS
+-------------------------
+
+For each Gmail or Google Workspace account:
+1. Turn on 2-Step Verification: myaccount.google.com/security
+2. Create an App Password: myaccount.google.com/apppasswords (name it "Runnex") and copy the 16 letters.
+3. In Gmail → Settings → Forwarding and POP/IMAP, check that IMAP is enabled.
+4. In Runnex: Email Accounts → Connect Gmail, or use Bulk connect to paste many accounts at once
+   ("email, app password, sender name" on each line).
+
+Runnex tests SMTP and IMAP before saving. Warmup starts on its own.
+It creates a Gmail label Runnex-Warmup where processed warmup emails are archived, so your inbox stays clean.
+
+If the connection fails:
+- "Login rejected": you used the normal password instead of an App Password, or 2-Step Verification is off.
+- Workspace: the Google Admin console may need to allow app passwords for your users.
+- "Cannot connect … 587": in the account's Server settings, switch to port 465 / SSL.
+
+Using your own domain (Google Workspace)? Add SPF, DKIM and DMARC. Check them under Anti-Spam Tools → Domain health check.
+
+
+6. DAILY WORKFLOW
+-----------------
+
+1. Import Sheet: upload a CSV or Excel file, or paste a Google Sheets link (shared as "anyone with the link").
+   Columns such as Email, Carrier name, Contact name, MC, DOT, Phone, State, Equipment and Power units are matched automatically.
+   Any other column becomes a variable, e.g. "{{lane}}".
+2. Templates & Sequences: pick one of the 5 ready-made dispatch sequences and click Use this sequence:
+   - Classic Pitch
+   - New Authority Welcome
+   - Rate per Mile Pain Point
+   - Lane / Freight Offer
+   - Soft Question
+
+   You can also go to Campaigns → New campaign: pick a list, write email 1 and up to N follow-ups, pick the sending accounts and set the schedule.
+   Use Send test email and Inbox placement test before launching.
+3. Unibox: every reply from every account lands here. Reply, label (Interested / Signed up / Call back …) or unsubscribe.
+4. Reports & Stats: sent, delivered, opened (seen), total views, clicks, replies, bounces and unsubscribes.
+   You can view them by day, campaign, account, agent or company, with best-time heatmaps and a CSV export.
+
+
+7. EMAIL LIST VERIFICATION
+--------------------------
+
+Runnex verifies every carrier email so you never send to a wrong address:
+- On import, the following are rejected: bad formats, fake or placeholder emails (test@, noemail@, example.com) and throwaway domains. Obvious typos like "gmial.com" or "yahoo.con" are corrected automatically.
+- Right after import and continuously in the background, each email is checked: the domain must exist, its mail server must accept email, and the mailbox itself is checked where possible.
+- Before every campaign email, the address is checked again. Invalid emails are never sent to. Hard bounces mark an address invalid permanently.
+- Email Verification page (menu → Outreach): see valid, risky and invalid counts, fix typos with one click, remove invalid contacts, check a single email, or re-verify everything.
+
+Mailbox check on Hostinger: most shared hosting blocks port 25, which the built-in mailbox check needs. The page shows "Port 25 on this server". If it says blocked, the format, typo, throwaway and mail-server checks still run. For full mailbox confirmation, connect a verification service.
+
+Verifalia (recommended, 25 free checks per day):
+1. Create a free account at verifalia.com.
+2. Go to Client area → Users and add a user with permission to run email validations. Using a separate user is safer than your main login.
+3. In Runnex: Email Verification → Verification settings → service Verifalia. Enter that user's username and password and click Save.
+4. The settings show your remaining Verifalia credits.
+
+Runnex only sends emails that pass the free built-in checks to Verifalia, so credits aren't wasted on obvious junk. Whole lists go to Verifalia in one batch right after import. If the free 25 a day run out, verification automatically continues with the built-in checks, and Verifalia resumes when credits refill. You can buy credit packs on Verifalia for big lists. No extra software is needed; Runnex talks to Verifalia directly.
+
+Other supported services, which use a single API key: MillionVerifier (cheapest paid), ZeroBounce and NeverBounce.
+
+Remove invalid emails from lists automatically is on by default. Invalid emails are taken out of every list and stay on file marked invalid, so re-importing the same sheet can never add them back.
+
+Statuses:
+- Valid: send.
+- Risky: catch-all domain, shared inbox (info@) or mailbox not confirmed. These are still sent by default. Turn on "Also skip risky emails" for maximum safety.
+- Invalid: never sent.
+
+
+8. USERS AND COMPANIES
+----------------------
+
+- Admin has full access: every company, all accounts and campaigns, users and settings.
+- Agent works only inside the companies an admin assigns to them. An agent connects their own Gmail accounts, imports carriers, runs their own campaigns, answers their own replies and sees their own stats.
+- Companies (admin): create several companies. Each has its own carriers, lists, templates, accounts, campaigns, signature and footer address. Switch between them in the top bar.
+
+
+8. ANTI-SPAM PROTECTION BUILT IN
+--------------------------------
+
+  - Protection: What it does
+  - Warmup network: Accounts email each other every day, ramping up 3 → 30 per day. Receivers open them, mark them important, reply, and move them out of spam.
+  - Placement tracking: Measures what share of each account's emails land in inbox vs spam over the last 7 days.
+  - Health score (0–100): Combines inbox placement, bounce rate, connection status and account age. Labels: Excellent / Good / At risk / Going to spam.
+  - Auto-pause: When 25% or more of an account's emails land in spam, or 8% or more bounce, it stops sending campaigns while warmup repairs it.
+  - Smart limits: Suggested safe volume by account age and health: 5 → 15 → 25 → 35 → 40/50 per day. "At risk" accounts get half of that. Hard caps sit well below Google's limits.
+  - Human-like sending: Random 2–5 minute gaps per account, business-hours window, weekdays only, rotation across accounts, and every carrier keeps the same sender for follow-ups.
+  - Content checker: Live 0–100 spam score while you write. Flags trigger words, caps, links, shorteners, images, hidden text and missing personalization.
+  - Spintax + variables: `{Hi Hello}` and `{{first_name}}` make every email unique.
+  - Gmail bulk-sender rules: One-click `List-Unsubscribe` headers, an unsubscribe link plus your company address, and plain-text alternatives.
+  - Suppression: Unsubscribes, hard bounces and "remove me" replies are never emailed again, across all campaigns.
+  - Duplicate protection: Skips carriers that another campaign emailed in the last N days, and stops all sequences to a carrier once they reply.
+
+Be realistic: no tool can guarantee that every email reaches the inbox. Gmail decides that from sender reputation and from how recipients react.
+These tools keep you inside the safe zone and warn you early.
+The most important rules:
+- Warm up new accounts for 2–3 weeks.
+- Send at most 30–50 cold emails per account per day. To send more, add accounts.
+- Keep your lists clean, with bounces under 2%.
+- Write short, personal emails with no links in the first email.
+
+
+9. GO-LIVE CHECKLIST
+--------------------
+
+[ ] Uploaded Runnex-Email-Marketing.zip, not the local "runnex" folder. The local folder contains the demo "config.php" and the SQLite demo database.
+[ ] PHP 8.2 or 8.3 selected, and SSL active (the site opens with "https://").
+[ ] "install.php" completed, then deleted.
+[ ] Cron job runs every minute (no red banner on the dashboard; Settings → Cron shows "Running").
+[ ] "https://your-domain/app/" and "https://your-domain/config.php" both show 403 Forbidden, which means the folder protection works.
+[ ] Admin opened Settings and checked that the App URL is the real "https://" address.
+[ ] Companies created (with physical address and footer), agents added and assigned to companies.
+[ ] At least 2 Gmail accounts connected. Warmup needs at least 2; 5 or more is better.
+[ ] Warm up for 14–21 days before the first real campaign.
+[ ] First campaign: Send test email to yourself, then Inbox placement test, then launch with a small list.
+
+
+10. TROUBLESHOOTING
+-------------------
+
+  - Problem: Fix
+  - Red "Background worker is not running" banner: The cron job is missing or the path is wrong. Copy the exact command from Settings → Cron job. As a temporary test, click Run worker once.
+  - "Login rejected" when connecting Gmail: Use an App Password (16 letters, spaces don't matter) and turn on 2-Step Verification.
+  - "Cannot connect to smtp.gmail.com:587": Edit the account → Server settings → port 465, security SSL.
+  - IMAP error: In Gmail → Settings → Forwarding and POP/IMAP, enable IMAP.
+  - Opens / clicks are always 0: Settings → App URL must be the public `https://` address, and the campaign must have "Track opens" on (not plain-text mode).
+  - Campaign "running" but nothing sends: Check that you're inside the sending window and days (campaign timezone), that the selected accounts aren't paused, in error or "Going to spam", and that the cron job is running.
+  - Excel upload fails: Save the sheet as `.xlsx` or CSV (old `.xls` isn't supported), or use a Google Sheets link.
+  - White page or "Something went wrong": Look at `storage/logs/app-DATE.log` in File Manager. For details, temporarily set `'debug' => true` in `config.php`.
+
+
+11. UPDATING AND BACKUP
+-----------------------
+
+- Back up "config.php" and the MySQL database (hPanel → Databases → phpMyAdmin → Export) regularly.
+- To update, replace the files but keep "config.php" and "storage/".

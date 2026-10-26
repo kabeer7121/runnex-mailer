@@ -1,0 +1,29 @@
+# Runnex Email Marketing
+Options -Indexes
+DirectoryIndex index.php
+
+<FilesMatch "^(config\.php|config\.local\.php|config\.example\.php|.*\.sql|.*\.log|.*\.lock|.*\.sqlite.*|SETUP-GUIDE\.txt)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # If the app lives in a subfolder (e.g. yourdomain.com/mail) and pages show 404,
+  # remove the # in front of the next line and put your folder name there:
+  # RewriteBase /mail/
+
+  # private folders
+  RewriteRule ^(app|storage)(/|$) - [F,L]
+
+  # clean tracking links inside emails: /o/TOKEN (open), /c/TOKEN (click), /u/TOKEN (unsubscribe)
+  RewriteRule ^(o|c|u)/([a-f0-9]{16,40})$ t.php?$1=$2 [QSA,L]
+
+  # clean page URLs: /dashboard, /campaigns, /campaign-view?id=5 ...
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^([a-z][a-z0-9-]*)$ index.php?p=$1 [QSA,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+</IfModule>

@@ -1,0 +1,12 @@
+config.local.php
+.env
+storage/logs/*
+!storage/logs/.gitkeep
+storage/imports/*
+!storage/imports/.gitkeep
+storage/*.lock
+*.log
+error_log
+.DS_Store
+.idea/
+.vscode/
