@@ -2,7 +2,7 @@
 Options -Indexes
 DirectoryIndex index.php
 
-<FilesMatch "^(config\.php|config\.local\.php|config\.example\.php|.*\.sql|.*\.log|.*\.lock|.*\.sqlite.*|SETUP-GUIDE\.txt)$">
+<FilesMatch "^(config\.php|config\.local\.php|config\.example\.php|.*\.sql|.*\.log|.*\.lock|.*\.sqlite.*)$">
   Require all denied
 </FilesMatch>
 
