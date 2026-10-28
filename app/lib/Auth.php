@@ -42,10 +42,13 @@ final class Auth
         if ($recent >= 10) {
             throw new RuntimeException('Too many login attempts. Please wait 15 minutes.');
         }
-        $u = $db->row('SELECT * FROM users WHERE email = ?', [strtolower($email)]);
+        $u = $db->row('SELECT * FROM users WHERE email = ?', [strtolower(trim($email))]);
         if (!$u || $u['status'] !== 'active' || !password_verify($password, $u['password_hash'])) {
             $db->insert('login_attempts', ['ip' => $ip, 'created_at' => now()]);
             return false;
+        }
+        if (password_needs_rehash($u['password_hash'], PASSWORD_DEFAULT)) {
+            $db->exec('UPDATE users SET password_hash = ? WHERE id = ?', [password_hash($password, PASSWORD_DEFAULT), $u['id']]);
         }
         session_regenerate_id(true);
         $_SESSION['uid'] = (int)$u['id'];
