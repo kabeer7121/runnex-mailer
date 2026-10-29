@@ -35,9 +35,13 @@ if (isset($_GET['o'])) {
         $db->exec('UPDATE messages SET open_count = open_count + 1, opened_at = COALESCE(opened_at, ?) WHERE id = ?', [now(), $m['id']]);
         rx_event($m, 'open');
     }
+    if (!$m) {
+        http_response_code(404);
+    }
     header('Content-Type: image/gif');
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
     header('Pragma: no-cache');
+    header('X-Robots-Tag: noindex, nofollow');
     echo base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
     exit;
 }
@@ -47,7 +51,8 @@ if (isset($_GET['c'])) {
     $token = (string)$_GET['c'];
     $enc = (string)($_GET['l'] ?? '');
     $url = (string)base64_decode(strtr($enc, '-_', '+/') . str_repeat('=', (4 - strlen($enc) % 4) % 4), true);
-    if (!preg_match('#^https?://#i', $url) || !hash_equals(Crypto::sign($token . '|' . $url), (string)($_GET['s'] ?? ''))) {
+    $host = (string)(parse_url($url, PHP_URL_HOST) ?? '');
+    if ($host === '' || !preg_match('#^https?://#i', $url) || !hash_equals(Crypto::sign($token . '|' . $url), (string)($_GET['s'] ?? ''))) {
         http_response_code(400);
         exit('Invalid link');
     }
@@ -56,6 +61,7 @@ if (isset($_GET['c'])) {
         $db->exec('UPDATE messages SET click_count = click_count + 1, clicked_at = COALESCE(clicked_at, ?), opened_at = COALESCE(opened_at, ?) WHERE id = ?', [now(), now(), $m['id']]);
         rx_event($m, 'click', mb_substr($url, 0, 2000));
     }
+    header('X-Robots-Tag: noindex, nofollow');
     header('Location: ' . $url, true, 302);
     exit;
 }
