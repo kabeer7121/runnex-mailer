@@ -23,8 +23,12 @@ if (is_post()) {
                 $ext = strtolower(pathinfo($f['name'], PATHINFO_EXTENSION));
                 if (!in_array($ext, ['csv', 'txt', 'xlsx'], true)) throw new RuntimeException('Upload a .csv or .xlsx file (old .xls: open in Excel and "Save as" .xlsx or CSV).');
                 $path = "$dir/$token.$ext";
-                move_uploaded_file($f['tmp_name'], $path);
+                if (!move_uploaded_file($f['tmp_name'], $path)) throw new RuntimeException('Could not save the uploaded file. Check that storage/imports is writable.');
                 $name = $f['name'];
+            }
+            if (filesize($path) > Importer::MAX_BYTES) {
+                @unlink($path);
+                throw new RuntimeException('File is too large. Keep imports under ' . (Importer::MAX_BYTES >> 20) . ' MB or split the sheet into smaller files.');
             }
             $_SESSION['import'] = ['path' => $path, 'name' => $name];
             redirect('import', ['step' => 'map']);
@@ -43,6 +47,11 @@ if (is_post()) {
             $rows = Importer::read($imp['path']);
             $hasHeader = post('has_header') === '1';
             $headers = $hasHeader ? array_shift($rows) : [];
+            if (count($rows) > Importer::MAX_ROWS) {
+                @unlink($imp['path']);
+                unset($_SESSION['import']);
+                throw new RuntimeException('This file has ' . number_format(count($rows)) . ' rows. Import at most ' . number_format(Importer::MAX_ROWS) . ' rows at a time by splitting the sheet.');
+            }
             $map = array_map('strval', (array)($_POST['map'] ?? []));
             $result = Importer::import($rows, $headers, $map, $companyId, $listId, ['update_existing' => post('update_existing') === '1', 'fix_typos' => post('fix_typos') === '1']);
             if (post('verify_now') === '1') {
@@ -88,7 +97,7 @@ layout_start('Import carriers', 'import');
     <label class="dropzone">
       <?= icon('upload') ?>
       <b>Choose a CSV or Excel (.xlsx) file</b>
-      <span class="muted small">Max <?= e(ini_get('upload_max_filesize')) ?></span>
+      <span class="muted small">Max <?= e(ini_get('upload_max_filesize')) ?>, up to <?= num(Importer::MAX_ROWS) ?> rows</span>
       <input type="file" name="file" accept=".csv,.xlsx,.txt">
     </label>
     <div class="or">or</div>

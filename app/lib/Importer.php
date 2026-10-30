@@ -5,6 +5,8 @@ declare(strict_types=1);
 final class Importer
 {
     private const DISPOSABLE = ['mailinator.com', 'guerrillamail.com', '10minutemail.com', 'tempmail.com', 'yopmail.com', 'trashmail.com', 'sharklasers.com', 'getnada.com', 'temp-mail.org', 'dispostable.com'];
+    public const MAX_BYTES = 20 * 1024 * 1024;
+    public const MAX_ROWS = 50000;
 
     /** @return array<int, array<int,string>> rows including header row */
     public static function read(string $path, int $limit = 0): array
