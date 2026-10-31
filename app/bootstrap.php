@@ -17,6 +17,10 @@ if (!is_file($cfgFile)) {
 }
 $GLOBALS['RX_CONFIG'] = require $cfgFile;
 if (!empty($GLOBALS['RX_CONFIG']['debug'])) ini_set('display_errors', '1');
+if (strlen((string)($GLOBALS['RX_CONFIG']['secret'] ?? '')) < 32) {
+    http_response_code(500);
+    exit("Config 'secret' must be set to at least 32 characters. See README.md for setup.\n");
+}
 
 foreach (['helpers', 'DB', 'Auth', 'SmtpClient', 'ImapClient', 'Template', 'Mailer', 'SpamChecker', 'Dns', 'Importer', 'Health', 'Warmup', 'Mailbox', 'Engine', 'Stats', 'Sequences', 'Migrations', 'Verifier'] as $f) {
     require_once RX_APP . '/lib/' . $f . '.php';

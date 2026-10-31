@@ -44,7 +44,7 @@ PHP 8.1+ (no framework, no dependencies), MySQL / MariaDB (SQLite supported for 
    ```
 6. Add the cron job:
    ```
-   * * * * * /usr/bin/php /path/to/app/cron.php
+   * * * * * /usr/bin/php /path/to/runnex-mailer/cron.php
    ```
    or call `https://your-domain/cron.php?key=CRON_KEY` from an external cron service.
 7. Make sure `storage/` is writable and that `/app/`, `/storage/` and `/config.php` return 403.
