@@ -87,6 +87,12 @@ if (isset($_GET['u'])) {
         $done = true;
     }
     $company = $m ? $db->row('SELECT name FROM companies WHERE id = ?', [$m['company_id']]) : null;
+    if (!$m) {
+        http_response_code(404);
+    }
+    header('Cache-Control: no-store');
+    header('Referrer-Policy: no-referrer');
+    header('X-Robots-Tag: noindex, nofollow');
     ?><!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Unsubscribe</title>
 <style>body{font-family:system-ui,Arial,sans-serif;background:#f4f4f5;color:#222;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:16px}.box{background:#fff;padding:32px;border-radius:12px;max-width:420px;width:100%;box-shadow:0 4px 20px rgba(0,0,0,.06);text-align:center}button{background:#d71920;color:#fff;border:0;padding:12px 22px;border-radius:8px;font-size:15px;cursor:pointer}</style></head>
