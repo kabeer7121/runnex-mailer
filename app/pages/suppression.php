@@ -39,8 +39,8 @@ if (is_post()) {
 $where = 's.company_id IN (' . DB::in(array_merge([0], $ids)) . ')';
 $params = array_merge([0], $ids);
 if (get('q') !== '') {
-    $where .= ' AND s.email LIKE ?';
-    $params[] = '%' . get('q') . '%';
+    $where .= " AND s.email LIKE ? ESCAPE '!'";
+    $params[] = like_contains(get('q'));
 }
 if (get('reason') !== '') {
     $where .= ' AND s.reason = ?';

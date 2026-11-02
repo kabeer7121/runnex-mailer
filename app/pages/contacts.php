@@ -71,8 +71,8 @@ $params = $cp;
 $join = '';
 $q = get('q');
 if ($q !== '') {
-    $where .= ' AND (c.email LIKE ? OR c.first_name LIKE ? OR c.last_name LIKE ? OR c.company_name LIKE ? OR c.mc_number LIKE ? OR c.dot_number LIKE ? OR c.phone LIKE ?)';
-    array_push($params, ...array_fill(0, 7, "%$q%"));
+    $where .= " AND (c.email LIKE ? ESCAPE '!' OR c.first_name LIKE ? ESCAPE '!' OR c.last_name LIKE ? ESCAPE '!' OR c.company_name LIKE ? ESCAPE '!' OR c.mc_number LIKE ? ESCAPE '!' OR c.dot_number LIKE ? ESCAPE '!' OR c.phone LIKE ? ESCAPE '!')";
+    array_push($params, ...array_fill(0, 7, like_contains($q)));
 }
 $listId = (int)get('list');
 if ($listId) {

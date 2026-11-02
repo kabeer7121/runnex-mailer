@@ -57,8 +57,8 @@ if ($lf !== '') {
     $lp[] = $lf;
 }
 if (get('q') !== '') {
-    $lw .= ' AND (ct.email LIKE ? OR ct.company_name LIKE ? OR ct.first_name LIKE ?)';
-    array_push($lp, '%' . get('q') . '%', '%' . get('q') . '%', '%' . get('q') . '%');
+    $lw .= " AND (ct.email LIKE ? ESCAPE '!' OR ct.company_name LIKE ? ESCAPE '!' OR ct.first_name LIKE ? ESCAPE '!')";
+    array_push($lp, ...array_fill(0, 3, like_contains(get('q'))));
 }
 [$off, $lim, $page] = paging(50);
 $leadTotal = (int)$db->val("SELECT COUNT(*) FROM campaign_leads l JOIN contacts ct ON ct.id = l.contact_id WHERE $lw", $lp);

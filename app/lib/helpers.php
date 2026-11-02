@@ -222,6 +222,11 @@ function post(string $k, $default = '')
     return is_string($v) ? trim($v) : $v;
 }
 
+function like_contains(string $term): string
+{
+    return '%' . strtr($term, ['!' => '!!', '%' => '!%', '_' => '!_']) . '%';
+}
+
 function get(string $k, $default = '')
 {
     $v = $_GET[$k] ?? $default;

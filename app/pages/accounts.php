@@ -70,9 +70,8 @@ $q = get('q');
 $where = $as;
 $params = $ap;
 if ($q !== '') {
-    $where .= ' AND (a.email LIKE ? OR a.from_name LIKE ?)';
-    $params[] = "%$q%";
-    $params[] = "%$q%";
+    $where .= " AND (a.email LIKE ? ESCAPE '!' OR a.from_name LIKE ? ESCAPE '!')";
+    array_push($params, like_contains($q), like_contains($q));
 }
 $status = get('status');
 if ($status === 'problem') $where .= " AND (a.status = 'error' OR a.send_paused_reason IS NOT NULL OR a.health_status IN ('critical','at_risk'))";

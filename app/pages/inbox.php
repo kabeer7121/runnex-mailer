@@ -64,8 +64,8 @@ elseif (array_key_exists($filter, lead_labels())) {
     $params[] = $filter;
 } else $where .= ' AND r.is_auto = 0';
 if (get('q') !== '') {
-    $where .= ' AND (r.from_email LIKE ? OR r.from_name LIKE ? OR r.subject LIKE ? OR c.company_name LIKE ?)';
-    array_push($params, ...array_fill(0, 4, '%' . get('q') . '%'));
+    $where .= " AND (r.from_email LIKE ? ESCAPE '!' OR r.from_name LIKE ? ESCAPE '!' OR r.subject LIKE ? ESCAPE '!' OR c.company_name LIKE ? ESCAPE '!')";
+    array_push($params, ...array_fill(0, 4, like_contains(get('q'))));
 }
 [$off, $lim, $page] = paging(40);
 $total = (int)$db->val("SELECT COUNT(*) FROM replies r LEFT JOIN contacts c ON c.id = r.contact_id WHERE $where", $params);
