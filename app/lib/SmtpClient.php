@@ -71,10 +71,10 @@ final class SmtpClient
     public function send(string $from, array $recipients, string $data): string
     {
         $this->stage = 'mail';
-        $this->cmd('MAIL FROM:<' . $from . '>', [250]);
+        $this->cmd('MAIL FROM:<' . self::envelope($from) . '>', [250]);
         $this->stage = 'rcpt';
         foreach ($recipients as $r) {
-            $this->cmd('RCPT TO:<' . $r . '>', [250, 251]);
+            $this->cmd('RCPT TO:<' . self::envelope((string)$r) . '>', [250, 251]);
         }
         $this->stage = 'data';
         $this->cmd('DATA', [354]);
@@ -85,6 +85,15 @@ final class SmtpClient
         $resp = $this->expect([250]);
         $this->stage = 'done';
         return $resp;
+    }
+
+    private static function envelope(string $addr): string
+    {
+        $addr = trim($addr);
+        if ($addr === '' || preg_match('/[\x00-\x20<>\x7f]/', $addr) || !str_contains($addr, '@')) {
+            throw new SmtpException('Invalid envelope address: ' . substr(preg_replace('/[^\x21-\x7e]/', '?', $addr), 0, 100), 'rejected');
+        }
+        return $addr;
     }
 
     public function quit(): void
