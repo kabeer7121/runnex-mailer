@@ -18,12 +18,15 @@ final class Mailer
         $h[] = 'Subject: ' . self::encodeHeader($o['subject'] ?? '');
         $h[] = 'Date: ' . date('r');
         $h[] = 'Message-ID: ' . $messageId;
-        if (!empty($o['in_reply_to'])) {
-            $h[] = 'In-Reply-To: ' . $o['in_reply_to'];
-            $h[] = 'References: ' . trim(($o['references'] ?? '') ?: $o['in_reply_to']);
+        $inReplyTo = self::headerValue((string)($o['in_reply_to'] ?? ''));
+        if ($inReplyTo !== '') {
+            $refs = self::headerValue((string)($o['references'] ?? ''));
+            $h[] = 'In-Reply-To: ' . $inReplyTo;
+            $h[] = 'References: ' . ($refs !== '' ? $refs : $inReplyTo);
         }
         foreach (($o['headers'] ?? []) as $k => $v) {
-            $h[] = $k . ': ' . $v;
+            if (!preg_match('/^[A-Za-z0-9-]+$/', (string)$k)) continue;
+            $h[] = $k . ': ' . self::headerValue((string)$v);
         }
         $h[] = 'MIME-Version: 1.0';
 
@@ -64,6 +67,11 @@ final class Mailer
         if ($name === '') return '<' . $email . '>';
         if (preg_match('/[^\x20-\x7E]/', $name)) return self::encodeHeader($name) . ' <' . $email . '>';
         return '"' . $name . '" <' . $email . '>';
+    }
+
+    private static function headerValue(string $s): string
+    {
+        return trim(preg_replace('/[\x00-\x1F\x7F]+/', ' ', $s));
     }
 
     public static function encodeHeader(string $s): string
