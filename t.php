@@ -31,7 +31,8 @@ function rx_msg(string $token): ?array
 if (isset($_GET['o'])) {
     $m = rx_msg((string)$_GET['o']);
     // ignore hits in the first few seconds after sending (security scanners / prefetch)
-    if ($m && !$isBot && !empty($m['sent_at']) && strtotime($m['sent_at'] . ' UTC') < time() - 4) {
+    if ($m && !$isBot && !empty($m['sent_at']) && strtotime($m['sent_at'] . ' UTC') < time() - 4
+        && !$db->row("SELECT id FROM events WHERE message_id = ? AND type = 'open' AND ip = ? AND created_at > ? LIMIT 1", [$m['id'], $ip, now(-60)])) {
         $db->exec('UPDATE messages SET open_count = open_count + 1, opened_at = COALESCE(opened_at, ?) WHERE id = ?', [now(), $m['id']]);
         rx_event($m, 'open');
     }
