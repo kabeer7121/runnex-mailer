@@ -78,7 +78,8 @@ final class Importer
         $xml = $zip->getFromName($sheetPath);
         $zip->close();
         if ($xml === false) throw new RuntimeException('Sheet not found in XLSX');
-        $sx = simplexml_load_string($xml);
+        $sx = @simplexml_load_string($xml);
+        if ($sx === false || !isset($sx->sheetData)) throw new RuntimeException('Invalid XLSX file');
         $rows = [];
         foreach ($sx->sheetData->row as $row) {
             $cells = [];
