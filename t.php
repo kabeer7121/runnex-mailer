@@ -84,6 +84,14 @@ if (isset($_GET['u'])) {
         }
     };
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+        // reject POST with an invalid/missing token (token in ?u= is the auth)
+        if (!$m) {
+            http_response_code(400);
+            header('Cache-Control: no-store');
+            header('X-Robots-Tag: noindex, nofollow');
+            header('Content-Type: text/plain; charset=utf-8');
+            exit('Invalid unsubscribe token');
+        }
         $unsub(); // RFC 8058 one-click (List-Unsubscribe-Post) and the confirm button
         $done = true;
     }
