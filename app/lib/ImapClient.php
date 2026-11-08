@@ -311,14 +311,27 @@ final class MailParser
         if ($enc === 'base64') $body = (string)base64_decode(preg_replace('/\s+/', '', $body));
         elseif ($enc === 'quoted-printable') $body = quoted_printable_decode($body);
         if (preg_match('/charset="?([\w\-]+)"?/i', $ct, $cm) && strtolower($cm[1]) !== 'utf-8') {
-            $conv = @mb_convert_encoding($body, 'UTF-8', $cm[1]);
-            if ($conv !== false) $body = $conv;
+            $body = self::toUtf8($body, $cm[1]);
         }
         if (str_starts_with($ct, 'text/html')) {
             if ($res['html'] === '') $res['html'] = $body;
         } else {
             $res['text'] .= ($res['text'] ? "\n" : '') . $body;
         }
+    }
+
+    private static function toUtf8(string $body, string $charset): string
+    {
+        $aliases = ['ks_c_5601-1987' => 'UHC', 'ks_c_5601' => 'UHC', 'x-gbk' => 'GBK', 'x-sjis' => 'SJIS-win'];
+        $charset = $aliases[strtolower($charset)] ?? $charset;
+        try {
+            $conv = @mb_convert_encoding($body, 'UTF-8', $charset);
+            if ($conv !== false) return $conv;
+        } catch (ValueError $e) {
+        }
+        $conv = @iconv($charset, 'UTF-8//IGNORE', $body);
+        if ($conv !== false) return $conv;
+        return mb_check_encoding($body, 'UTF-8') ? $body : mb_scrub($body, 'UTF-8');
     }
 
     /** Remove quoted history from a reply. */
