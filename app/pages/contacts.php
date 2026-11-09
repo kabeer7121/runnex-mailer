@@ -102,8 +102,8 @@ if (get('export') === '1') {
     $st = $db->q("SELECT c.* FROM contacts c $join WHERE 1=1 $where ORDER BY c.id", $params);
     while ($r = $st->fetch()) {
         $line = [];
-        foreach ($cols as $col) $line[] = $r[$col];
-        fputcsv($out, array_merge($line, [$r['status'], $r['label'], $r['last_contacted_at'], $r['custom']]), ',', '"', '\\');
+        foreach ($cols as $col) $line[] = csv_cell($r[$col]);
+        fputcsv($out, array_merge($line, [$r['status'], csv_cell($r['label']), $r['last_contacted_at'], csv_cell($r['custom'])]), ',', '"', '\\');
     }
     exit;
 }

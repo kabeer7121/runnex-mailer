@@ -34,7 +34,7 @@ if (get('export') === '1') {
     fputcsv($out, ['sent_at', 'campaign', 'step', 'from_account', 'to_email', 'carrier', 'subject', 'status', 'opened_at', 'opens', 'clicked_at', 'clicks', 'replied_at', 'bounced_at', 'unsubscribed_at'], ',', '"', '\\');
     $st = $db->q("SELECT m.*, cp.name AS campaign, a.email AS acc, c.company_name FROM messages m LEFT JOIN campaigns cp ON cp.id = m.campaign_id LEFT JOIN email_accounts a ON a.id = m.account_id LEFT JOIN contacts c ON c.id = m.contact_id WHERE m.kind = 'campaign' $where ORDER BY m.sent_at", $params);
     while ($r = $st->fetch()) {
-        fputcsv($out, [local_dt($r['sent_at'], 'Y-m-d H:i'), $r['campaign'], (int)$r['step_no'] + 1, $r['acc'], $r['to_email'], $r['company_name'], $r['subject'], $r['status'], $r['opened_at'] ? local_dt($r['opened_at'], 'Y-m-d H:i') : '', $r['open_count'], $r['clicked_at'] ? local_dt($r['clicked_at'], 'Y-m-d H:i') : '', $r['click_count'], $r['replied_at'] ? local_dt($r['replied_at'], 'Y-m-d H:i') : '', $r['bounced_at'] ? local_dt($r['bounced_at'], 'Y-m-d H:i') : '', $r['unsubscribed_at'] ? local_dt($r['unsubscribed_at'], 'Y-m-d H:i') : ''], ',', '"', '\\');
+        fputcsv($out, [local_dt($r['sent_at'], 'Y-m-d H:i'), csv_cell($r['campaign']), (int)$r['step_no'] + 1, $r['acc'], csv_cell($r['to_email']), csv_cell($r['company_name']), csv_cell($r['subject']), $r['status'], $r['opened_at'] ? local_dt($r['opened_at'], 'Y-m-d H:i') : '', $r['open_count'], $r['clicked_at'] ? local_dt($r['clicked_at'], 'Y-m-d H:i') : '', $r['click_count'], $r['replied_at'] ? local_dt($r['replied_at'], 'Y-m-d H:i') : '', $r['bounced_at'] ? local_dt($r['bounced_at'], 'Y-m-d H:i') : '', $r['unsubscribed_at'] ? local_dt($r['unsubscribed_at'], 'Y-m-d H:i') : ''], ',', '"', '\\');
     }
     exit;
 }

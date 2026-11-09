@@ -318,6 +318,15 @@ function valid_email(string $email): bool
     return (bool)filter_var($email, FILTER_VALIDATE_EMAIL) && strlen($email) <= 191;
 }
 
+function csv_cell($value)
+{
+    if (is_string($value) && $value !== '' && strpbrk($value[0], "=+-@\t\r") !== false
+        && !preg_match('/^[+-]?[\d\s().-]+$/', $value)) {
+        return "'" . $value;
+    }
+    return $value;
+}
+
 /** Simple pagination helper: returns [offset, limit, page]. */
 function paging(int $perPage = 50): array
 {
