@@ -85,7 +85,8 @@ final class Template
     private static function niceName(string $n): string
     {
         // "JOHN" -> "John" (leave mixed-case names like "McDonald" alone)
-        return ($n === strtoupper($n) || $n === strtolower($n)) ? ucwords(strtolower($n)) : $n;
+        if ($n !== mb_strtoupper($n, 'UTF-8') && $n !== mb_strtolower($n, 'UTF-8')) return $n;
+        return mb_convert_case(mb_strtolower($n, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
     }
 
     private static function greeting(): string
