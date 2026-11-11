@@ -30,9 +30,15 @@ final class Dns
         $res['checks'][] = ['name' => 'DKIM (google selector)', 'ok' => (bool)$dk, 'info' => $dk ? 'DKIM key published.' : 'Not found. Google Admin → Apps → Gmail → Authenticate email → Generate & publish DKIM, then click "Start authentication".'];
 
         $dm = array_values(array_filter(self::txt('_dmarc.' . $domain), fn($t) => stripos($t, 'v=DMARC1') === 0));
-        if ($dm) {
-            preg_match('/p=(\w+)/i', $dm[0], $m);
-            $res['checks'][] = ['name' => 'DMARC', 'ok' => true, 'info' => $dm[0] . (strtolower($m[1] ?? '') === 'none' ? ' (policy "none" is fine to start)' : '')];
+        if (count($dm) > 1) {
+            $res['checks'][] = ['name' => 'DMARC', 'ok' => false, 'info' => 'Multiple DMARC records found – receivers ignore all of them. Keep only one.'];
+        } elseif ($dm) {
+            $policy = preg_match('/(?:^|;)\s*p\s*=\s*(\w+)/i', $dm[0], $m) ? strtolower($m[1]) : '';
+            if (!in_array($policy, ['none', 'quarantine', 'reject'], true)) {
+                $res['checks'][] = ['name' => 'DMARC', 'ok' => false, 'info' => $dm[0] . ' — missing or invalid p= tag (use none, quarantine or reject)'];
+            } else {
+                $res['checks'][] = ['name' => 'DMARC', 'ok' => true, 'info' => $dm[0] . ($policy === 'none' ? ' (policy "none" is fine to start)' : '')];
+            }
         } else {
             $res['checks'][] = ['name' => 'DMARC', 'ok' => false, 'info' => 'No DMARC record. Add TXT _dmarc "v=DMARC1; p=none; rua=mailto:dmarc@' . $domain . '"'];
         }
