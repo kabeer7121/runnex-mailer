@@ -23,7 +23,7 @@ if ($a === 'preview') {
     json_out([
         'to' => $contact['email'],
         'subject' => Template::render((string)($_POST['subject'] ?? ''), $vars),
-        'body' => Template::render((string)($_POST['body'] ?? ''), $vars),
+        'body' => Template::renderHtml((string)($_POST['body'] ?? ''), $vars),
     ]);
 }
 

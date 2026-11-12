@@ -177,7 +177,7 @@ final class Mailer
         $subject = $threaded ? 'Re: ' . preg_replace('/^(re:\s*)+/i', '', $lead['thread_subject']) : Template::render((string)$step['subject'], $vars);
         if ($subject === '') $subject = 'Quick question';
 
-        $body = Template::render((string)$step['body_html'], $vars);
+        $body = Template::renderHtml((string)$step['body_html'], $vars);
         $unsubUrl = $base ? tracking_url('u', $token) : '';
 
         $headers = [];

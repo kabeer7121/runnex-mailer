@@ -9,7 +9,20 @@ declare(strict_types=1);
  */
 final class Template
 {
+    private const HTML_VARS = ['signature'];
+
     public static function render(string $text, array $vars): string
+    {
+        return self::renderWith($text, $vars, false);
+    }
+
+    /** For HTML bodies: contact data is escaped, the HTML signature is kept as is. */
+    public static function renderHtml(string $html, array $vars): string
+    {
+        return self::renderWith($html, $vars, true);
+    }
+
+    private static function renderWith(string $text, array $vars, bool $escape): string
     {
         // protect {{var}} tokens from the spintax pass
         $slots = [];
@@ -21,13 +34,14 @@ final class Template
         $text = self::spin($text);
 
         $lower = array_change_key_case($vars, CASE_LOWER);
-        return preg_replace_callback("/\x01(\d+)\x02/", function ($m) use ($slots, $lower) {
+        return preg_replace_callback("/\x01(\d+)\x02/", function ($m) use ($slots, $lower, $escape) {
             $expr = $slots[(int)$m[1]];
             $parts = explode('|', $expr, 2);
             $key = strtolower(trim($parts[0]));
             $fallback = isset($parts[1]) ? trim($parts[1]) : '';
-            $val = isset($lower[$key]) ? trim((string)$lower[$key]) : '';
-            return $val !== '' ? $val : $fallback;
+            $val = isset($lower[$key]) && is_scalar($lower[$key]) ? trim((string)$lower[$key]) : '';
+            if ($val === '') return $fallback;
+            return $escape && !in_array($key, self::HTML_VARS, true) ? htmlspecialchars($val, ENT_QUOTES | ENT_HTML5, 'UTF-8') : $val;
         }, $text);
     }
 

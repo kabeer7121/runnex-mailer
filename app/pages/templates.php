@@ -82,7 +82,7 @@ $sample = Template::vars(
             <div class="seq-mail">
               <div class="small muted"><?= $i === 0 ? 'Email 1' : 'Follow-up ' . $i . ' · ' . (int)$s[0] . ' days later · same thread' ?></div>
               <b><?= e($i === 0 ? Template::render($s[1], $sample) : 'Re: ' . Template::render($seq['steps'][0][1], $sample)) ?></b>
-              <div class="seq-body"><?= Template::render($s[2], $sample) ?></div>
+              <div class="seq-body"><?= Template::renderHtml($s[2], $sample) ?></div>
             </div>
           <?php endforeach; ?>
           <p class="small muted">Every carrier gets a different variation of each line (spintax), so no two emails are identical.</p>

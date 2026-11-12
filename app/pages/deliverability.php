@@ -15,7 +15,7 @@ if (is_post() && post('action') === 'placement') {
     try {
         $body = (string)($_POST['body'] ?? '');
         $vars = Template::vars(['first_name' => 'Mike', 'company_name' => 'Sample Trucking LLC', 'mc_number' => '123456', 'state' => 'TX', 'equipment_type' => 'Dry Van'], $acc, $db->row('SELECT * FROM companies WHERE id = ?', [$acc['company_id']]) ?: []);
-        $tid = Mailer::placementTest($acc, Template::render(post('subject') ?: 'Quick question', $vars), Template::render($body ?: 'Hi, just checking in.', $vars), null);
+        $tid = Mailer::placementTest($acc, Template::render(post('subject') ?: 'Quick question', $vars), Template::renderHtml($body ?: 'Hi, just checking in.', $vars), null);
         flash('success', 'Test sent. Results update automatically in 2–5 minutes (requires the cron job).');
         redirect('deliverability', ['test' => $tid]);
     } catch (Throwable $e) {
