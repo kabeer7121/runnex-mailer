@@ -70,7 +70,9 @@ final class SpamChecker
         // links
         preg_match_all('#href=["\']([^"\']+)#i', $html, $hm);
         preg_match_all('#https?://[^\s<>"\']+#i', $text, $tm);
-        $links = array_unique(array_merge($hm[1], $tm[0]));
+        $hrefs = array_map(fn($l) => html_entity_decode(trim($l), ENT_QUOTES | ENT_HTML5, 'UTF-8'), $hm[1]);
+        $plain = array_map(fn($l) => rtrim($l, '.,;:!?)]\''), $tm[0]);
+        $links = array_unique(array_merge($hrefs, $plain));
         $links = array_filter($links, fn($l) => stripos($l, 'mailto:') !== 0 && stripos($l, 'tel:') !== 0);
         $lc = count($links);
         if ($lc > 3) $add('high', "$lc links in the email. Use 0–2 links in cold emails (the first email ideally has none).", 12);
