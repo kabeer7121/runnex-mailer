@@ -85,6 +85,7 @@ final class Verifier
 
         // 5. DNS
         $info = self::domainInfo($domain);
+        if (!empty($info['dns_error'])) return $r('unverified', 'DNS lookup failed – will retry');
         if ($info['nullmx']) return $r('invalid', 'Domain does not accept email (null MX)');
         if (!$info['mx']) return $r('invalid', $info['exists'] ? 'Domain has no mail server' : 'Domain does not exist');
 
@@ -144,7 +145,10 @@ final class Verifier
             return self::$domainCache[$domain] = ['mx' => (bool)$row['has_mx'], 'mx_host' => $row['mx_host'], 'nullmx' => (bool)$row['null_mx'], 'exists' => (bool)$row['exists_dns'], 'catchall' => $row['catch_all'] === null ? null : (bool)$row['catch_all']];
         }
         if (!$allowNetwork) return ['mx' => true, 'mx_host' => null, 'nullmx' => false, 'exists' => true, 'catchall' => null];
-        $mx = @dns_get_record($domain, DNS_MX) ?: [];
+        $mx = @dns_get_record($domain, DNS_MX);
+        if ($mx === false) {
+            return ['mx' => true, 'mx_host' => null, 'nullmx' => false, 'exists' => true, 'catchall' => null, 'dns_error' => true];
+        }
         usort($mx, fn($a, $b) => ($a['pri'] ?? 0) <=> ($b['pri'] ?? 0));
         $host = $mx ? rtrim((string)$mx[0]['target'], '.') : null;
         $nullMx = $mx && $host === '';
