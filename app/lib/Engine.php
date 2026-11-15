@@ -74,9 +74,17 @@ final class Engine
         }
         $d = new DateTime('now', $tz);
         $days = array_map('intval', explode(',', (string)$c['send_days']));
-        if (!in_array((int)$d->format('N'), $days, true)) return false;
+        $start = (string)$c['window_start'];
+        $end = (string)$c['window_end'];
         $hm = $d->format('H:i');
-        return $hm >= $c['window_start'] && $hm < $c['window_end'];
+        if ($start <= $end) {
+            $open = $hm >= $start && $hm < $end;
+        } else {
+            // overnight window such as 22:00-06:00: the early-morning part belongs to the previous day
+            $open = $hm >= $start || $hm < $end;
+            if ($hm < $end) $d->modify('-1 day');
+        }
+        return $open && in_array((int)$d->format('N'), $days, true);
     }
 
     public static function sendCampaigns(int $deadline): int
