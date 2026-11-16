@@ -321,14 +321,14 @@ final class Engine
         $rows = $db->all("SELECT c.id, c.email FROM list_contacts lc JOIN contacts c ON c.id = lc.contact_id
             WHERE lc.list_id = ? AND c.company_id = ? AND c.status = 'active'
             AND c.id NOT IN (SELECT contact_id FROM campaign_leads WHERE campaign_id = ?)", [$c['list_id'], $c['company_id'], $c['id']]);
-        $added = 0;
-        $db->pdo->beginTransaction();
-        foreach ($rows as $r) {
-            if (is_suppressed($r['email'], (int)$c['company_id'])) continue;
-            $added += $db->insertIgnore('campaign_leads', ['campaign_id' => $c['id'], 'contact_id' => $r['id'], 'status' => 'pending', 'created_at' => now()]) ? 1 : 0;
-        }
-        $db->pdo->commit();
-        return $added;
+        return $db->tx(function (DB $db) use ($rows, $c) {
+            $added = 0;
+            foreach ($rows as $r) {
+                if (is_suppressed($r['email'], (int)$c['company_id'])) continue;
+                $added += $db->insertIgnore('campaign_leads', ['campaign_id' => $c['id'], 'contact_id' => $r['id'], 'status' => 'pending', 'created_at' => now()]) ? 1 : 0;
+            }
+            return $added;
+        });
     }
 
     /** Pause a running campaign whose list is bouncing badly – protects every account in it. */
