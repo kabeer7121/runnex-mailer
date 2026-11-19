@@ -5,6 +5,7 @@ declare(strict_types=1);
  * Personalisation + spintax.
  *   {{first_name}}            variable
  *   {{first_name|there}}      variable with fallback
+ *   {{first_name|{there|friend}}}  fallback may use spintax
  *   {Hi|Hello|Hey}            spintax – one option picked at random per email
  */
 final class Template
@@ -26,7 +27,7 @@ final class Template
     {
         // protect {{var}} tokens from the spintax pass
         $slots = [];
-        $text = preg_replace_callback('/\{\{\s*([^{}]+?)\s*\}\}/', function ($m) use (&$slots) {
+        $text = preg_replace_callback('/\{\{\s*((?:[^{}]|\{[^{}]*\})+?)\s*\}\}/', function ($m) use (&$slots) {
             $slots[] = $m[1];
             return "\x01" . (count($slots) - 1) . "\x02";
         }, $text);
@@ -38,7 +39,7 @@ final class Template
             $expr = $slots[(int)$m[1]];
             $parts = explode('|', $expr, 2);
             $key = strtolower(trim($parts[0]));
-            $fallback = isset($parts[1]) ? trim($parts[1]) : '';
+            $fallback = isset($parts[1]) ? trim(self::spin($parts[1])) : '';
             $val = isset($lower[$key]) && is_scalar($lower[$key]) ? trim((string)$lower[$key]) : '';
             if ($val === '') return $fallback;
             return $escape && !in_array($key, self::HTML_VARS, true) ? htmlspecialchars($val, ENT_QUOTES | ENT_HTML5, 'UTF-8') : $val;
