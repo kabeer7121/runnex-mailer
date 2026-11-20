@@ -11,6 +11,7 @@ declare(strict_types=1);
 final class Template
 {
     private const HTML_VARS = ['signature'];
+    public const TOKEN = '/\{\{\s*((?:[^{}]|\{[^{}]*\})+?)\s*\}\}/';
 
     public static function render(string $text, array $vars): string
     {
@@ -27,7 +28,7 @@ final class Template
     {
         // protect {{var}} tokens from the spintax pass
         $slots = [];
-        $text = preg_replace_callback('/\{\{\s*((?:[^{}]|\{[^{}]*\})+?)\s*\}\}/', function ($m) use (&$slots) {
+        $text = preg_replace_callback(self::TOKEN, function ($m) use (&$slots) {
             $slots[] = $m[1];
             return "\x01" . (count($slots) - 1) . "\x02";
         }, $text);

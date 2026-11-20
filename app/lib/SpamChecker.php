@@ -26,8 +26,9 @@ final class SpamChecker
     {
         $issues = [];
         $score = 100;
-        $text = Mailer::htmlToText(Template::spin($html));
-        $subject = Template::spin($subject);
+        $raw = $subject . $html;
+        $text = Mailer::htmlToText(self::spin($html));
+        $subject = self::spin($subject);
         $all = strtolower($subject . ' ' . $text);
         $add = function (string $level, string $msg, int $penalty) use (&$issues, &$score) {
             $issues[] = ['level' => $level, 'msg' => $msg];
@@ -99,10 +100,10 @@ final class SpamChecker
         if (preg_match('~(color\s*:\s*(#fff\b|#ffffff|white))|font-size\s*:\s*[01]px~i', $html)) $add('high', 'Hidden or invisible text detected.', 15);
 
         // personalisation
-        if (!preg_match('/\{\{\s*(first_name|company_name|carrier_name|mc_number|full_name)/i', $subject . $html)) {
+        if (!preg_match('/\{\{\s*(first_name|company_name|carrier_name|mc_number|full_name)/i', $raw)) {
             $add('med', 'No personalisation. Add {{first_name}} or {{company_name}} – personalised emails are far less likely to be filtered.', 6);
         }
-        if (!preg_match('/\{[^{}]*\|[^{}]*\}/', preg_replace('/\{\{[^}]*\}\}/', '', $subject . $html))) {
+        if (!preg_match('/\{[^{}]*\|[^{}]*\}/', preg_replace(Template::TOKEN, '', $raw))) {
             $add('low', 'No spintax. Use {Hi|Hello|Hey} style variations so every email is unique.', 3);
         }
 
@@ -110,6 +111,17 @@ final class SpamChecker
         $grade = $score >= 85 ? 'Great' : ($score >= 70 ? 'Good' : ($score >= 50 ? 'Risky' : 'High spam risk'));
         if (!$issues) $issues[] = ['level' => 'ok', 'msg' => 'No problems found. This email looks clean and personal.'];
         return ['score' => $score, 'grade' => $grade, 'issues' => $issues, 'words' => $words, 'links' => $lc, 'triggers' => array_keys($found)];
+    }
+
+    private static function spin(string $text): string
+    {
+        $tokens = [];
+        $text = preg_replace_callback(Template::TOKEN, function ($m) use (&$tokens) {
+            $tokens[] = $m[0];
+            return "\x01" . (count($tokens) - 1) . "\x02";
+        }, $text);
+        $text = Template::spin($text);
+        return preg_replace_callback("/\x01(\d+)\x02/", fn($m) => $tokens[(int)$m[1]], $text);
     }
 
     private static function has(string $hay, string $word): bool
