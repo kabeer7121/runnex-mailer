@@ -13,12 +13,13 @@ final class SmtpException extends RuntimeException
     }
 }
 
-/** Minimal dependency-free SMTP client (STARTTLS / SSL, AUTH LOGIN). */
+/** Minimal dependency-free SMTP client (STARTTLS / SSL, AUTH LOGIN / PLAIN). */
 final class SmtpClient
 {
     /** @var resource|null */
     private $sock = null;
     private string $stage = 'connect';
+    private array $authMethods = [];
 
     public function __construct(
         private string $host,
@@ -56,12 +57,22 @@ final class SmtpClient
     private function ehlo(): void
     {
         $host = parse_url(base_url(), PHP_URL_HOST) ?: 'localhost';
-        $this->cmd('EHLO ' . $host, [250]);
+        $resp = $this->cmd('EHLO ' . $host, [250]);
+        $this->authMethods = [];
+        foreach (preg_split('/\r?\n/', $resp) as $line) {
+            if (preg_match('/^250[ -]AUTH[ =](.+)$/i', trim($line), $m)) {
+                $this->authMethods = array_merge($this->authMethods, preg_split('/\s+/', strtoupper(trim($m[1]))));
+            }
+        }
     }
 
     public function auth(string $user, string $pass): void
     {
         $this->stage = 'auth';
+        if (in_array('PLAIN', $this->authMethods, true) && !in_array('LOGIN', $this->authMethods, true)) {
+            $this->cmd('AUTH PLAIN ' . base64_encode("\0" . $user . "\0" . $pass), [235]);
+            return;
+        }
         $this->cmd('AUTH LOGIN', [334]);
         $this->cmd(base64_encode($user), [334]);
         $this->cmd(base64_encode($pass), [235]);
