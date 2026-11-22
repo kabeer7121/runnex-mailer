@@ -302,11 +302,12 @@ final class MailParser
             }
             return;
         }
+        if (str_starts_with(strtolower($h['content-disposition'] ?? ''), 'attachment')) return;
         if (str_starts_with($ct, 'message/') || str_starts_with($ct, 'text/rfc822-headers')) {
             $res['text'] .= ($res['text'] ? "\n" : '') . $body;
             return;
         }
-        if (!str_starts_with($ct, 'text/')) return;
+        if (!str_starts_with($ct, 'text/plain') && !str_starts_with($ct, 'text/html')) return;
         $enc = strtolower($h['content-transfer-encoding'] ?? '');
         if ($enc === 'base64') $body = (string)base64_decode(preg_replace('/\s+/', '', $body));
         elseif ($enc === 'quoted-printable') $body = quoted_printable_decode($body);
