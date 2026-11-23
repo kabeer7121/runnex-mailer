@@ -340,8 +340,12 @@ final class MailParser
     {
         $lines = explode("\n", str_replace("\r", '', $text));
         $out = [];
-        foreach ($lines as $l) {
+        foreach ($lines as $i => $l) {
+            $next = $lines[$i + 1] ?? '';
             if (preg_match('/^On .+wrote:\s*$/i', $l) || preg_match('/^-{2,}\s*Original Message/i', $l) || preg_match('/^From: .+/i', $l) && $out) break;
+            // Gmail wraps long "On ... wrote:" lines; Outlook puts a line of underscores above "From:"
+            if (preg_match('/^On .+wrote:\s*$/i', $l . ' ' . $next)) break;
+            if (preg_match('/^_{8,}\s*$/', $l) && preg_match('/^From: .+/i', $next)) break;
             if (str_starts_with(ltrim($l), '>')) continue;
             $out[] = $l;
         }
