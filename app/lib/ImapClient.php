@@ -155,7 +155,8 @@ final class ImapClient
         [$st] = $this->command('UID COPY ' . $uid . ' ' . self::q($folder));
         if ($st !== 'OK') return false;
         $this->command('UID STORE ' . $uid . ' +FLAGS.SILENT (\\Deleted)');
-        $this->command('EXPUNGE');
+        // Plain EXPUNGE would also remove other messages already flagged \Deleted in this folder
+        $this->command(in_array('UIDPLUS', $this->caps, true) ? 'UID EXPUNGE ' . $uid : 'EXPUNGE');
         return true;
     }
 
