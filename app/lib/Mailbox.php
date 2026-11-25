@@ -11,7 +11,7 @@ declare(strict_types=1);
 final class Mailbox
 {
     public const LABEL = 'Runnex-Warmup';
-    private const FIELDS = ['FROM', 'TO', 'SUBJECT', 'MESSAGE-ID', 'IN-REPLY-TO', 'REFERENCES', 'X-RUNNEX-WARMUP', 'X-RUNNEX-TEST', 'AUTO-SUBMITTED', 'X-AUTOREPLY', 'X-FAILED-RECIPIENTS', 'DATE'];
+    private const FIELDS = ['FROM', 'TO', 'SUBJECT', 'MESSAGE-ID', 'IN-REPLY-TO', 'REFERENCES', 'X-RUNNEX-WARMUP', 'X-RUNNEX-TEST', 'AUTO-SUBMITTED', 'X-AUTOREPLY', 'X-AUTORESPOND', 'PRECEDENCE', 'X-FAILED-RECIPIENTS', 'DATE'];
 
     /** Verify SMTP auth + IMAP login. Returns ['ok'=>bool, 'smtp'=>string, 'imap'=>string]. */
     public static function testConnection(array $acc): array
@@ -209,8 +209,7 @@ final class Mailbox
 
         $parsed = MailParser::parse($imap->fetchRaw($uid));
         $body = MailParser::stripQuoted($parsed['text']);
-        $auto = (isset($h['auto-submitted']) && strtolower($h['auto-submitted']) !== 'no') || isset($h['x-autoreply'])
-            || preg_match('/(out of (the )?office|automatic reply|auto(-| )?reply|autoreply|away from|on vacation)/i', $h['subject'] ?? '');
+        $auto = self::isAutoReply($h);
         self::recordReply($acc, $msg, [
             'from_email' => $fromEmail, 'from_name' => $fromName, 'subject' => $h['subject'] ?? '',
             'body' => $body !== '' ? $body : $parsed['text'], 'message_id' => $mid,
@@ -218,6 +217,15 @@ final class Mailbox
         ]);
         if ($kind === 'spam') $imap->move($uid, 'INBOX');
         $summary['replies']++;
+    }
+
+    public static function isAutoReply(array $h): bool
+    {
+        $submitted = strtolower(trim(strtok((string)($h['auto-submitted'] ?? ''), ' ;(') ?: ''));
+        if ($submitted !== '' && $submitted !== 'no') return true;
+        if (isset($h['x-autoreply']) || isset($h['x-autorespond'])) return true;
+        if (preg_match('/^\s*(auto_reply|bulk|junk)\b/i', $h['precedence'] ?? '')) return true;
+        return (bool)preg_match('/(out of (the )?office|automatic reply|auto(-| )?reply|autoreply|away from|on vacation)/i', $h['subject'] ?? '');
     }
 
     public static function recordReply(array $acc, array $msg, array $r): void
