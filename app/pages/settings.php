@@ -24,16 +24,27 @@ if (is_post()) {
     } catch (Throwable $e) {
         $tz = 'America/Chicago';
     }
+    $appUrl = rtrim(post('app_url'), '/');
+    if (!filter_var($appUrl, FILTER_VALIDATE_URL) || !in_array(strtolower((string)parse_url($appUrl, PHP_URL_SCHEME)), ['http', 'https'], true)) {
+        flash('error', 'App URL must be a full address starting with http:// or https://');
+        redirect('settings');
+    }
+    $startH = max(0, min(23, (int)post('warmup_start_hour')));
+    $endH = max(1, min(24, (int)post('warmup_end_hour')));
+    if ($endH <= $startH) {
+        flash('error', 'Warmup "until" hour must be later than the "from" hour.');
+        redirect('settings');
+    }
     $vals = [
-        'app_url' => rtrim(post('app_url'), '/'),
+        'app_url' => $appUrl,
         'timezone' => $tz,
         'default_daily_limit' => max(1, (int)post('default_daily_limit')),
         'default_warmup_start' => max(1, (int)post('default_warmup_start')),
         'default_warmup_increase' => max(1, (int)post('default_warmup_increase')),
         'default_warmup_max' => max(2, (int)post('default_warmup_max')),
         'default_warmup_reply_rate' => max(0, min(100, (int)post('default_warmup_reply_rate'))),
-        'warmup_start_hour' => max(0, min(23, (int)post('warmup_start_hour'))),
-        'warmup_end_hour' => max(1, min(24, (int)post('warmup_end_hour'))),
+        'warmup_start_hour' => $startH,
+        'warmup_end_hour' => $endH,
         'imap_interval' => max(180, (int)post('imap_interval')),
     ];
     foreach ($vals as $k => $v) set_setting($k, $v);
