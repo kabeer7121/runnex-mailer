@@ -318,6 +318,14 @@ function valid_email(string $email): bool
     return (bool)filter_var($email, FILTER_VALIDATE_EMAIL) && strlen($email) <= 191;
 }
 
+/** Error message for an unusable new password, or null. bcrypt ignores everything after 72 bytes. */
+function password_problem(string $pass): ?string
+{
+    if (strlen($pass) < 8) return 'Password must be at least 8 characters.';
+    if (strlen($pass) > 72) return 'Password must be at most 72 bytes (about 72 characters).';
+    return null;
+}
+
 function csv_cell($value)
 {
     if (is_string($value) && $value !== '' && strpbrk($value[0], "=+-@\t\r") !== false

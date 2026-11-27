@@ -27,8 +27,8 @@ if (is_post()) {
     $data = ['name' => post('name'), 'email' => $email, 'role' => $role, 'status' => $status];
     $pass = (string)($_POST['password'] ?? '');
     if ($pass !== '') {
-        if (strlen($pass) < 8) {
-            flash('error', 'Password must be at least 8 characters.');
+        if ($err = password_problem($pass)) {
+            flash('error', $err);
             back('users');
         }
         $data['password_hash'] = password_hash($pass, PASSWORD_DEFAULT);
@@ -64,7 +64,7 @@ if ($u || get('new') === '1') {
         <?= csrf_field() ?>
         <label>Name<input name="name" value="<?= e($u['name']) ?>" required></label>
         <label>Email (login)<input type="email" name="email" value="<?= e($u['email']) ?>" required></label>
-        <label>Password <?= $id ? '<span class="muted small">(leave blank to keep)</span>' : '' ?><input type="password" name="password" minlength="8" autocomplete="new-password" <?= $id ? '' : 'required' ?>></label>
+        <label>Password <?= $id ? '<span class="muted small">(leave blank to keep)</span>' : '' ?><input type="password" name="password" minlength="8" maxlength="72" autocomplete="new-password" <?= $id ? '' : 'required' ?>></label>
         <div class="grid2">
           <label>Role<select name="role"><option value="agent" <?= $u['role'] === 'agent' ? 'selected' : '' ?>>Agent</option><option value="admin" <?= $u['role'] === 'admin' ? 'selected' : '' ?>>Admin</option></select></label>
           <label>Status<select name="status"><option value="active">Active</option><option value="disabled" <?= $u['status'] === 'disabled' ? 'selected' : '' ?>>Disabled</option></select></label>

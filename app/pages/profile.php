@@ -12,8 +12,8 @@ if (is_post()) {
             flash('error', 'Current password is wrong.');
             redirect('profile');
         }
-        if (strlen($new) < 8) {
-            flash('error', 'New password must be at least 8 characters.');
+        if ($err = password_problem($new)) {
+            flash('error', 'New ' . lcfirst($err));
             redirect('profile');
         }
         $data['password_hash'] = password_hash($new, PASSWORD_DEFAULT);
@@ -32,7 +32,7 @@ layout_start('My profile', 'profile');
     <label>Email<input value="<?= e($u['email']) ?>" disabled></label>
     <h3>Change password</h3>
     <label>Current password<input type="password" name="current_password"></label>
-    <label>New password<input type="password" name="new_password" minlength="8"></label>
+    <label>New password<input type="password" name="new_password" minlength="8" maxlength="72"></label>
     <button class="btn btn-primary">Save</button>
   </form>
 </div>
