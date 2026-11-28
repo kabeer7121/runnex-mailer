@@ -121,6 +121,16 @@ function base_url(): string
     return rtrim((string)setting('app_url', cfg('app_url', '')), '/');
 }
 
+/** Name for EHLO/HELO: the App URL host, or an address literal ([1.2.3.4], [IPv6:...]) when it is an IP. */
+function helo_name(): string
+{
+    $host = trim((string)parse_url(base_url(), PHP_URL_HOST), '[]');
+    if ($host === '') return 'localhost';
+    if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) return '[' . $host . ']';
+    if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) return '[IPv6:' . $host . ']';
+    return $host;
+}
+
 /** Clean URLs (/campaign-view?id=5) – needs the rewrite rules in .htaccess. Set 'pretty_urls' => false in config.php to switch off. */
 function pretty_urls(): bool
 {

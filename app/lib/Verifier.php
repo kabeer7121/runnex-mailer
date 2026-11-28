@@ -202,7 +202,7 @@ final class Verifier
         try {
             [$code] = $read();
             if ($code !== 220) return ['result' => 'unknown', 'detail' => 'server busy'];
-            $host = parse_url(base_url(), PHP_URL_HOST) ?: 'localhost';
+            $host = helo_name();
             [$code] = $cmd('EHLO ' . $host);
             if ($code !== 250) [$code] = $cmd('HELO ' . $host);
             [$code, $t] = $cmd('MAIL FROM:<verify@' . $host . '>');

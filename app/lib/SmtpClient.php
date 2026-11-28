@@ -56,8 +56,7 @@ final class SmtpClient
 
     private function ehlo(): void
     {
-        $host = parse_url(base_url(), PHP_URL_HOST) ?: 'localhost';
-        $resp = $this->cmd('EHLO ' . $host, [250]);
+        $resp = $this->cmd('EHLO ' . helo_name(), [250]);
         $this->authMethods = [];
         foreach (preg_split('/\r?\n/', $resp) as $line) {
             if (preg_match('/^250[ -]AUTH[ =](.+)$/i', trim($line), $m)) {
